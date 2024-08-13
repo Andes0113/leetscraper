@@ -38,23 +38,19 @@ class NeetcodeSpider(scrapy.Spider):
 
         html = scrapy.Selector(text=content)
 
-        for topic in html.css("app-root div div div app-table.ng-star-inserted"):
-            topic_text = topic.css("div p.ng-star-inserted::text")
+        for topic_element in html.css("app-root div div div app-table.ng-star-inserted"):
+            topic = topic_element.css("div p.ng-star-inserted::text").get().strip()
 
-            problems = topic.css("div table tbody tr")
-            problem_list = []
+            problems = topic_element.css("div table tbody tr")
             for problem in problems:
-                name = problem.css("td a.table-text::text")
-                difficulty = problem.css("td div button b::text")
-                link = problem.css("td a.table-text::attr(href)")
+                name = problem.css("td a.table-text::text").get().strip()
+                difficulty = problem.css("td div button b::text").get()
+                link = problem.css("td a.table-text::attr(href)").get()
                 print(link)
-                problem_list.append({
-                    "name": name.get().strip(),
-                    "difficulty": difficulty.get(),
-                    "link": link.get(),
-                })
-            
-            yield {
-                "topic": topic_text.get().strip(),
-                "problems": problem_list,
-            }
+                yield {
+                    "name": name,
+                    "topic": topic,
+                    "difficulty": difficulty,
+                    "link": link,
+                }
+        
