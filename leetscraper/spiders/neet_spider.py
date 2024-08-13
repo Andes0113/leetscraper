@@ -46,9 +46,12 @@ class NeetcodeSpider(scrapy.Spider):
             for problem in problems:
                 name = problem.css("td a.table-text::text")
                 difficulty = problem.css("td div button b::text")
+                link = problem.css("td a.table-text::attr(href)")
+                print(link)
                 problem_list.append({
                     "name": name.get().strip(),
-                    "difficulty": difficulty.get()
+                    "difficulty": difficulty.get(),
+                    "link": link.get(),
                 })
             
             yield {
