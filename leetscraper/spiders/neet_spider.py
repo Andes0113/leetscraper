@@ -26,6 +26,7 @@ class NeetcodeSpider(scrapy.Spider):
                         # PageMethod("wait_for_selector", 'a:has-text("Contains Duplicate")'),  # Update with actual target element selector
 
                     ],
+                    arbitrary="arbitray"
                 )
             )
 
