@@ -26,9 +26,10 @@ async function scrape() {
         data: { problemId: q.id },
       }
     );
-    console.log('fetched', data.result);
     const question = data.result;
-    return {
+    const video = question.video.substring(question.video.indexOf('src="') + 5);
+    const videoUrl = video.substring(0, video.indexOf('"'));
+    const questionData = {
       id: question.id,
       name: question.name,
       description: question.description,
@@ -36,7 +37,12 @@ async function scrape() {
       concepts: question.prereqs.map((req) => req.name),
       solutions: question.solutions,
       starterCode: question.starterCode,
+      videoUrl: videoUrl,
     };
+
+    console.log('fetched', questionData);
+
+    return questionData;
   });
 
   const questions = await Promise.allSettled(questionPromises);
