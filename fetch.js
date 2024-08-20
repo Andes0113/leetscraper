@@ -2,9 +2,11 @@ import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
 import { writeFile } from 'fs';
 
+// Limit to 3 requests per second
 const http = axiosRateLimit(axios.create(), { maxRPS: 3 });
 
 async function scrape() {
+  // Fetch all questions from NeetCode.io
   const res = await http.post(
     'https://us-central1-neetcode-dd170.cloudfunctions.net/getProblemListFunction',
     {
@@ -12,12 +14,12 @@ async function scrape() {
     }
   );
 
+  // Filter for highest quality questions (NeetCode150)
   const questionIds = Object.keys(res.data.result)
     .map((key) => res.data.result[key])
     .filter((q) => q.tag == 'NeetCode150');
 
-  console.log(questionIds);
-
+  // Fetch question metadata (name, description, difficulty, concepts, solutions, starter code, video url)
   const questionPromises = questionIds.map(async (q) => {
     console.log('starting question fetching', q.id);
     const { data } = await http.post(
@@ -49,6 +51,7 @@ async function scrape() {
 
   console.log(questions);
 
+  // Write to file
   const json = JSON.stringify({
     questions: questions
       .filter((q) => q.status == 'fulfilled')
