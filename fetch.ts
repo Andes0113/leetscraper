@@ -18,6 +18,7 @@ type Question = {
 };
 
 const EMBEDDING_MODEL = 'text-embedding-3-large';
+const QUESTIONS_TAG = 'NeetCode150';
 
 // Parameters for neetcode api
 const BASE_URL = 'https://us-central1-neetcode-dd170.cloudfunctions.net';
@@ -42,7 +43,7 @@ async function scrape() {
   // Filter for highest quality questions (NeetCode150)
   const questionIds: string[] = Object.keys(res.data.result)
     .map((key) => res.data.result[key])
-    .filter((q) => q.tag == 'NeetCode150')
+    .filter((q) => q.tag === QUESTIONS_TAG)
     .map((q) => q.id);
 
   // Fetch question metadata (name, description, difficulty, concepts, solutions, starter code, video url)
@@ -52,7 +53,7 @@ async function scrape() {
 
   // Resolve all promises
   const questions: Question[] = (await Promise.allSettled(questionPromises))
-    .filter((q) => q.status == 'fulfilled')
+    .filter((q) => q.status === 'fulfilled')
     .map((q) => q.value);
 
   console.log('Fetched all questions');
