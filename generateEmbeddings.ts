@@ -7,7 +7,7 @@ const client = new openai({
 
 async function generateEmbeddings() {
   const batchInputFile = await client.files.create({
-    file: fs.createReadStream('embeddingBatchRequest.jsonl'),
+    file: fs.createReadStream('embeddingBatchRequest.jsonl'), // Use node file since BunFile not supported
     purpose: 'batch',
   });
 
