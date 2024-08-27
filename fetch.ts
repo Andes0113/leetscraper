@@ -17,6 +17,8 @@ type Question = {
   videoUrl: string;
 };
 
+const EMBEDDING_MODEL = 'text-embedding-3-large';
+
 // Parameters for neetcode api
 const BASE_URL = 'https://us-central1-neetcode-dd170.cloudfunctions.net';
 const RATE_LIMIT_PER_SECOND = 1;
@@ -124,7 +126,7 @@ function createEmbeddingRequestFileContent(questions: Question[]): string {
       (question): BatchEmbeddingRequest => ({
         custom_id: question.id,
         input: question.solutions.python,
-        model: 'text-embedding-3-large',
+        model: EMBEDDING_MODEL,
       })
     )
     .map((request) => JSON.stringify(request))
