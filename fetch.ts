@@ -1,13 +1,14 @@
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
 import type { BatchEmbeddingRequest, Question } from './types';
-
-const EMBEDDING_MODEL = 'text-embedding-3-small';
-const QUESTIONS_TAG = 'NeetCode150';
-
-// Parameters for neetcode api
-const BASE_URL = 'https://us-central1-neetcode-dd170.cloudfunctions.net';
-const RATE_LIMIT_PER_SECOND = 1;
+import {
+  QUESTIONS_TAG,
+  BASE_URL,
+  RATE_LIMIT_PER_SECOND,
+  EMBEDDING_MODEL,
+  EMBEDDING_BATCH_REQUEST_FILE,
+  QUESTIONS_FILE,
+} from './constants';
 
 // Define http client for neetcode api w/ rate limit
 const http = axiosRateLimit(
@@ -54,13 +55,13 @@ async function scrape() {
   // Write questions to file
   const questionsJson = JSON.stringify(questions);
 
-  await Bun.write('questions.json', questionsJson);
+  await Bun.write(QUESTIONS_FILE, questionsJson);
 
   // Create and write to embedding request file
   const embeddingRequestFileContent =
     createEmbeddingRequestFileContent(questions);
 
-  await Bun.write('embeddingBatchRequest.jsonl', embeddingRequestFileContent);
+  await Bun.write(EMBEDDING_BATCH_REQUEST_FILE, embeddingRequestFileContent);
 }
 
 // Fetch question metadata from neetcode api

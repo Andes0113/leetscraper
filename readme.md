@@ -27,9 +27,3 @@ Fetches the result of the batch, groups the questions with their embeddings base
 ```bash
 bun group
 ```
-
-### Running all in succession
-
-```bash
-bun all
-```

@@ -2,3 +2,6 @@
 .env
 .DS_Store
 batch.json
+questionsWithEmbeddings.json
+questions.json
+embeddingBatchRequest.jsonl

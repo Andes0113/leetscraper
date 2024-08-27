@@ -1,20 +1,13 @@
 import openai from 'openai';
+import { OPENAI_API_KEY, QUESTIONS_WITH_EMBEDDINGS_FILE } from './constants';
 import type {
   EmbeddingPackage,
   QuestionWithEmbedding,
   Question,
 } from './types';
 
-if (!process.env.POSTGRES_URL) {
-  throw new Error('POSTGRES_URL is not set');
-}
-
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY is not set');
-}
-
 const client = new openai({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: OPENAI_API_KEY,
 });
 
 function wrapWithBrackets(content: string) {
@@ -90,7 +83,7 @@ async function main() {
   );
 
   await Bun.write(
-    'questionsWithEmbeddings.json',
+    QUESTIONS_WITH_EMBEDDINGS_FILE,
     JSON.stringify(questionsWithEmbeddings)
   );
 }
