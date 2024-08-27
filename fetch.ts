@@ -1,9 +1,10 @@
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
-import { writeFile } from 'fs';
+
+const RATE_LIMIT_PER_SECOND = 3;
 
 // Limit to 3 requests per second
-const http = axiosRateLimit(axios.create(), { maxRPS: 3 });
+const http = axiosRateLimit(axios.create(), { maxRPS: RATE_LIMIT_PER_SECOND });
 
 async function scrape() {
   // Fetch all questions from NeetCode.io
@@ -21,7 +22,7 @@ async function scrape() {
 
   // Fetch question metadata (name, description, difficulty, concepts, solutions, starter code, video url)
   const questionPromises = questionIds.map(async (q) => {
-    console.log('starting question fetching', q.id);
+    console.log('Started fetching', q.id);
     const { data } = await http.post(
       'https://us-central1-neetcode-dd170.cloudfunctions.net/getProblemMetadataFunction',
       {
@@ -42,14 +43,12 @@ async function scrape() {
       videoUrl: videoUrl,
     };
 
-    console.log('fetched', questionData);
+    console.log('Fetched', questionData.id);
 
     return questionData;
   });
 
   const questions = await Promise.allSettled(questionPromises);
-
-  console.log(questions);
 
   // Write to file
   const json = JSON.stringify({
@@ -58,12 +57,7 @@ async function scrape() {
       .map((q) => q.value),
   });
 
-  writeFile('questions.json', json, (err) => {
-    if (err) console.log(err);
-    else {
-      console.log('File written successfully');
-    }
-  });
+  await Bun.write('questions.json', json);
 }
 
 scrape();
