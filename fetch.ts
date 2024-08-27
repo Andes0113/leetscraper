@@ -1,21 +1,6 @@
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
-import type { EmbeddingCreateParams } from 'openai/resources/embeddings';
-
-type Question = {
-  id: string;
-  name: string;
-  description: string;
-  difficulty: string;
-  concepts: string[];
-  starterCode: {
-    [key: string]: string;
-  };
-  solutions: {
-    [key: string]: string;
-  };
-  videoUrl: string;
-};
+import type { BatchEmbeddingRequest, Question } from './types';
 
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const QUESTIONS_TAG = 'NeetCode150';
@@ -117,14 +102,6 @@ async function fetchQuestionMetadata(questionId: string): Promise<Question> {
 
   return questionData;
 }
-
-// Custom id required for batch embedding requests
-type BatchEmbeddingRequest = {
-  custom_id: string;
-  method: 'GET' | 'POST';
-  url: string;
-  body: EmbeddingCreateParams;
-};
 
 function createEmbeddingRequestFileContent(questions: Question[]): string {
   const embeddingRequestFileContent: string = questions

@@ -5,7 +5,10 @@
   "main": "fetch.js",
   "type": "module",
   "scripts": {
-    "start": "node fetch.js"
+    "fetch": "bun fetch.ts",
+    "embed": "bun generateBatch.ts",
+    "group": "bun groupBatchResultsWithQuestions.ts",
+    "all": "bun run fetch && bun run batch && bun run group"
   },
   "keywords": [],
   "author": "",
