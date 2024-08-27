@@ -133,5 +133,4 @@ function createEmbeddingRequestFileContent(questions: Question[]): string {
   return embeddingRequestFileContent;
 }
 
-// Run scrape function
 scrape();
