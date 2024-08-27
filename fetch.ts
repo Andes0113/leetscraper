@@ -17,7 +17,7 @@ type Question = {
   videoUrl: string;
 };
 
-const EMBEDDING_MODEL = 'text-embedding-3-large';
+const EMBEDDING_MODEL = 'text-embedding-3-small';
 const QUESTIONS_TAG = 'NeetCode150';
 
 // Parameters for neetcode api
@@ -119,15 +119,24 @@ async function fetchQuestionMetadata(questionId: string): Promise<Question> {
 }
 
 // Custom id required for batch embedding requests
-type BatchEmbeddingRequest = EmbeddingCreateParams & { custom_id: string };
+type BatchEmbeddingRequest = {
+  custom_id: string;
+  method: 'GET' | 'POST';
+  url: string;
+  body: EmbeddingCreateParams;
+};
 
 function createEmbeddingRequestFileContent(questions: Question[]): string {
   const embeddingRequestFileContent: string = questions
     .map(
       (question): BatchEmbeddingRequest => ({
         custom_id: question.id,
-        input: question.solutions.python,
-        model: EMBEDDING_MODEL,
+        method: 'POST',
+        url: '/v1/embeddings',
+        body: {
+          input: question.solutions.python,
+          model: EMBEDDING_MODEL,
+        },
       })
     )
     .map((request) => JSON.stringify(request))
