@@ -4,7 +4,7 @@ import {
   EMBEDDING_BATCH_REQUEST_FILE,
   BATCH_METADATA_FILE,
   OPENAI_API_KEY,
-} from './constants';
+} from './common/constants';
 
 const client = new openai({
   apiKey: OPENAI_API_KEY,

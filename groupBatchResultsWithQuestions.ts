@@ -1,10 +1,13 @@
 import openai from 'openai';
-import { OPENAI_API_KEY, QUESTIONS_WITH_EMBEDDINGS_FILE } from './constants';
+import {
+  OPENAI_API_KEY,
+  QUESTIONS_WITH_EMBEDDINGS_FILE,
+} from './common/constants';
 import type {
   EmbeddingPackage,
   QuestionWithEmbedding,
   Question,
-} from './types';
+} from './common/types';
 
 const client = new openai({
   apiKey: OPENAI_API_KEY,

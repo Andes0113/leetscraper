@@ -1,6 +1,6 @@
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
-import type { BatchEmbeddingRequest, Question } from './types';
+import type { BatchEmbeddingRequest, Question } from './common/types';
 import {
   QUESTIONS_TAG,
   BASE_URL,
@@ -8,7 +8,7 @@ import {
   EMBEDDING_MODEL,
   EMBEDDING_BATCH_REQUEST_FILE,
   QUESTIONS_FILE,
-} from './constants';
+} from './common/constants';
 
 // Define http client for neetcode api w/ rate limit
 const http = axiosRateLimit(
