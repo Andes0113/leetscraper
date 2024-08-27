@@ -1,63 +1,137 @@
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
+import type { EmbeddingCreateParams } from 'openai/resources/embeddings';
 
-const RATE_LIMIT_PER_SECOND = 3;
+type Question = {
+  id: string;
+  name: string;
+  description: string;
+  difficulty: string;
+  concepts: string[];
+  starterCode: {
+    [key: string]: string;
+  };
+  solutions: {
+    [key: string]: string;
+  };
+  videoUrl: string;
+};
 
-// Limit to 3 requests per second
-const http = axiosRateLimit(axios.create(), { maxRPS: RATE_LIMIT_PER_SECOND });
+// Parameters for neetcode api
+const BASE_URL = 'https://us-central1-neetcode-dd170.cloudfunctions.net';
+const RATE_LIMIT_PER_SECOND = 1;
+
+// Define http client for neetcode api w/ rate limit
+const http = axiosRateLimit(
+  axios.create({
+    baseURL: BASE_URL,
+  }),
+  {
+    maxRPS: RATE_LIMIT_PER_SECOND,
+  }
+);
 
 async function scrape() {
   // Fetch all questions from NeetCode.io
-  const res = await http.post(
-    'https://us-central1-neetcode-dd170.cloudfunctions.net/getProblemListFunction',
-    {
-      data: {},
-    }
-  );
+  const res = await http.post('/getProblemListFunction', {
+    data: {},
+  });
 
   // Filter for highest quality questions (NeetCode150)
-  const questionIds = Object.keys(res.data.result)
+  const questionIds: string[] = Object.keys(res.data.result)
     .map((key) => res.data.result[key])
-    .filter((q) => q.tag == 'NeetCode150');
+    .filter((q) => q.tag == 'NeetCode150')
+    .map((q) => q.id);
 
   // Fetch question metadata (name, description, difficulty, concepts, solutions, starter code, video url)
-  const questionPromises = questionIds.map(async (q) => {
-    console.log('Started fetching', q.id);
-    const { data } = await http.post(
-      'https://us-central1-neetcode-dd170.cloudfunctions.net/getProblemMetadataFunction',
-      {
-        data: { problemId: q.id },
-      }
+  const questionPromises = questionIds.map(
+    async (questionId): Promise<Question> => fetchQuestionMetadata(questionId)
+  );
+
+  // Resolve all promises
+  const questions: Question[] = (await Promise.allSettled(questionPromises))
+    .filter((q) => q.status == 'fulfilled')
+    .map((q) => q.value);
+
+  console.log('Fetched all questions');
+
+  if (questions.length != questionIds.length) {
+    console.log(
+      'Failed to fetch:',
+      questionIds.filter((id) => !questions.map((q) => q.id).includes(id))
     );
-    const question = data.result;
-    const video = question.video.substring(question.video.indexOf('src="') + 5);
-    const videoUrl = video.substring(0, video.indexOf('"'));
-    const questionData = {
-      id: question.id,
-      name: question.name,
-      description: question.description,
-      difficulty: question.difficulty,
-      concepts: question.prereqs.map((req) => req.name),
-      solutions: question.solutions,
-      starterCode: question.starterCode,
-      videoUrl: videoUrl,
-    };
+    throw new Error('Some questions failed to fetch');
+  }
 
-    console.log('Fetched', questionData.id);
+  // Write questions to file
+  const questionsJson = JSON.stringify(questions);
 
-    return questionData;
-  });
+  await Bun.write('questions.json', questionsJson);
 
-  const questions = await Promise.allSettled(questionPromises);
+  // Create and write to embedding request file
+  const embeddingRequestFileContent =
+    createEmbeddingRequestFileContent(questions);
 
-  // Write to file
-  const json = JSON.stringify({
-    questions: questions
-      .filter((q) => q.status == 'fulfilled')
-      .map((q) => q.value),
-  });
-
-  await Bun.write('questions.json', json);
+  await Bun.write('embeddingBatchRequest.jsonl', embeddingRequestFileContent);
 }
 
+// Fetch question metadata from neetcode api
+async function fetchQuestionMetadata(questionId: string): Promise<Question> {
+  console.log('Started fetching', questionId);
+
+  const res = await http
+    .post('/getProblemMetadataFunction', {
+      data: { problemId: questionId },
+    })
+    .catch((err) => {
+      console.log('Failed to fetch', questionId);
+      console.log(err);
+      return null;
+    });
+
+  if (!res?.data) {
+    throw new Error('Failed to fetch question metadata');
+  }
+
+  const question = res.data.result;
+
+  // Condense video data into only the youtube video id
+  const video = question.video.substring(question.video.indexOf('src="') + 5);
+  const videoUrl = video.substring(0, video.indexOf('"'));
+
+  const questionData: Question = {
+    id: question.id,
+    name: question.name,
+    description: question.description,
+    difficulty: question.difficulty,
+    concepts: question.prereqs?.map((req) => req.name) || [], // Prereqs are undefined, not empty, if question has no prereqs
+    solutions: question.solutions,
+    starterCode: question.starterCode,
+    videoUrl: videoUrl,
+  };
+
+  console.log('Fetched', questionId);
+
+  return questionData;
+}
+
+// Custom id required for batch embedding requests
+type BatchEmbeddingRequest = EmbeddingCreateParams & { custom_id: string };
+
+function createEmbeddingRequestFileContent(questions: Question[]): string {
+  const embeddingRequestFileContent: string = questions
+    .map(
+      (question): BatchEmbeddingRequest => ({
+        custom_id: question.id,
+        input: question.solutions.python,
+        model: 'text-embedding-3-large',
+      })
+    )
+    .map((request) => JSON.stringify(request))
+    .join('\n');
+
+  return embeddingRequestFileContent;
+}
+
+// Run scrape function
 scrape();
